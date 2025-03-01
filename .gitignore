@@ -10,6 +10,7 @@
 go.sum
 .idea
 
+logs.log
 
 # Test binary, build with `go test -c`
 *.test
