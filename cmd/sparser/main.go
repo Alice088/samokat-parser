@@ -5,9 +5,12 @@ import (
 	"alice088/sparser/internal/pkg/env"
 	"alice088/sparser/internal/pkg/geo"
 	"alice088/sparser/internal/pkg/logger"
+	"sync"
 )
 
 func main() {
+	wg := new(sync.WaitGroup)
+
 	env.Init()
 	log, logFile := logger.Init()
 	geos, err := geo.Init()
@@ -17,9 +20,10 @@ func main() {
 		log.Fatal().Err(err).Msg("Error initializing geo")
 	}
 
+	wg.Add(len(geos))
 	for _, geoDto := range geos {
 		log.Debug().Interface("geo", geoDto).Msg("Geo")
-		sparser.Parse(log, geoDto)
+		go sparser.Parse(log, geoDto, wg)
 	}
-
+	wg.Wait()
 }

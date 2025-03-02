@@ -21,6 +21,7 @@ type parsingContext struct {
 }
 
 func CollectSessionData(log *zerolog.Logger) *dto.SessionData {
+
 	sessionData := new(dto.SessionData)
 	parsCtx := &parsingContext{
 		log:         log,
