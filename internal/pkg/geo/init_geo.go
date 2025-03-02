@@ -1,13 +1,31 @@
 package geo
 
-import "alice088/sparser/internal/pkg/dto"
+import (
+	"alice088/sparser/internal/pkg/dto"
+	"encoding/json"
+	"errors"
+	"io/ioutil"
+	"os"
+)
 
-func Init() (*dto.GEO, error) {
-	geo := &dto.GEO{}
+func Init() ([]*dto.GEO, error) {
+	var geos []*dto.GEO
 
-	if err := Update(geo, 0); err != nil {
+	jsonFile, err := os.Open("./configs/geo_conf.json")
+	if err != nil {
 		return nil, err
 	}
 
-	return geo, nil
+	jsonByteValue, _ := ioutil.ReadAll(jsonFile)
+
+	err = json.Unmarshal(jsonByteValue, &geos)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(geos) == 0 {
+		return nil, errors.New("no geo objects")
+	}
+
+	return geos, nil
 }

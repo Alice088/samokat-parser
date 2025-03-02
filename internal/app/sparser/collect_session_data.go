@@ -36,7 +36,7 @@ func CollectSessionData(log *zerolog.Logger) *dto.SessionData {
 	ctx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
 
-	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel = context.WithTimeout(ctx, 300*time.Second)
 	defer cancel()
 
 	err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
@@ -47,6 +47,7 @@ func CollectSessionData(log *zerolog.Logger) *dto.SessionData {
 
 				if strings.Contains(ev.Request.URL, samokat.CARTS_GET) && ev.Request.HasPostData && !skipEvent {
 					log.Debug().Msg(ev.Request.URL)
+					log.Debug().Msg(string(ev.RequestID))
 					collectAuthToken(parsCtx)
 					go collectShowcaseId(parsCtx)
 					skipEvent = true

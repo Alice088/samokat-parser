@@ -10,12 +10,16 @@ import (
 func main() {
 	env.Init()
 	log, logFile := logger.Init()
-	_, err := geo.Init()
+	geos, err := geo.Init()
 	defer logger.CloseLog(logFile)
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error initializing geo")
 	}
 
-	sparser.CollectSessionData(log)
+	for _, geoDto := range geos {
+		log.Debug().Interface("geo", geoDto).Msg("Geo")
+		sparser.Parse(log, geoDto)
+	}
+
 }
