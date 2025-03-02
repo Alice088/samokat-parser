@@ -2,6 +2,7 @@ package sparser
 
 import (
 	"alice088/sparser/internal/pkg/dto"
+	errs "alice088/sparser/internal/pkg/errors"
 	"alice088/sparser/internal/pkg/samokat"
 	"context"
 	"encoding/json"
@@ -20,7 +21,7 @@ type parsingContext struct {
 	log         *zerolog.Logger
 }
 
-func CollectSessionData(log *zerolog.Logger) *dto.SessionData {
+func CollectSessionData(log *zerolog.Logger) (*dto.SessionData, error) {
 
 	sessionData := new(dto.SessionData)
 	parsCtx := &parsingContext{
@@ -66,10 +67,14 @@ func CollectSessionData(log *zerolog.Logger) *dto.SessionData {
 	)
 
 	if err != nil {
-		log.Fatal().Err(err).Msg("Fatal during chrome run")
+		return nil, err
 	}
 
-	return sessionData
+	if sessionData.AuthToken != "" && sessionData.ShowcaseID != "" {
+		return sessionData, nil
+	}
+
+	return nil, &errs.ErrSessionDataMissing{}
 }
 
 func setupChromedpOptions() []chromedp.ExecAllocatorOption {

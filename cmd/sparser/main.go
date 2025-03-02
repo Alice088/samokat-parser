@@ -9,8 +9,7 @@ import (
 )
 
 func main() {
-	wg := new(sync.WaitGroup)
-
+	wg := &sync.WaitGroup{}
 	env.Init()
 	log, logFile := logger.Init()
 	geos, err := geo.Init()
