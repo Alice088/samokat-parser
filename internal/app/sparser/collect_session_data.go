@@ -6,6 +6,7 @@ import (
 	"alice088/sparser/internal/pkg/samokat"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/rs/zerolog"
@@ -21,16 +22,41 @@ type parsingContext struct {
 	log         *zerolog.Logger
 }
 
-func CollectSessionData(log *zerolog.Logger) (*dto.SessionData, error) {
+func CollectSessionData(log *zerolog.Logger) *dto.SessionData {
+	var sData *dto.SessionData
+	var err error
+	limit := 2
+	count := 0
 
+	for {
+		sData, err = runCollect(log)
+
+		if err != nil {
+			if errors.Is(err, &errs.ErrSessionDataMissing{}) && count < limit {
+				log.Error().Err(err).
+					Int("Try", count).
+					Msg("Error session data missing for. Starting new try")
+
+				count++
+				continue
+			}
+
+			log.Fatal().Err(err).Msg("Error during CollectSessionData")
+		}
+
+		return sData
+	}
+}
+
+func runCollect(log *zerolog.Logger) (*dto.SessionData, error) {
+	var skipEvent bool
+	opts := setupChromedpOptions()
 	sessionData := new(dto.SessionData)
+
 	parsCtx := &parsingContext{
 		log:         log,
 		sessionData: sessionData,
 	}
-	var skipEvent bool
-
-	opts := setupChromedpOptions()
 
 	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), opts...)
 	defer allocCancel()
@@ -80,7 +106,7 @@ func CollectSessionData(log *zerolog.Logger) (*dto.SessionData, error) {
 func setupChromedpOptions() []chromedp.ExecAllocatorOption {
 	return append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.ExecPath(os.Getenv("EXEC_CHROME_PATH")),
-		chromedp.UserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"),
+		chromedp.UserAgent(samokat.USER_AGENT),
 		chromedp.Headless,
 		chromedp.DisableGPU,
 		chromedp.NoSandbox,
