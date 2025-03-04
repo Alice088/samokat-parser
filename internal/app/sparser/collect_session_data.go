@@ -10,26 +10,34 @@ import (
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/rs/zerolog"
+	"github.com/tidwall/gjson"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
 
 type parsingContext struct {
-	ev          *network.EventRequestWillBeSent
+	log         *zerolog.Logger
 	ctx         context.Context
 	sessionData *dto.SessionData
-	log         *zerolog.Logger
 }
 
 func CollectSessionData(log *zerolog.Logger) *dto.SessionData {
-	var sData *dto.SessionData
 	var err error
 	limit := 2
 	count := 0
 
+	parsContext := &parsingContext{
+		log: log,
+		sessionData: &dto.SessionData{
+			AuthToken:  "",
+			ShowcaseID: "",
+		},
+	}
+
 	for {
-		sData, err = runCollect(log)
+		parsContext.sessionData, err = runCollect(log, parsContext)
 
 		if err != nil {
 			if errors.Is(err, &errs.ErrSessionDataMissing{}) && count < limit {
@@ -44,19 +52,17 @@ func CollectSessionData(log *zerolog.Logger) *dto.SessionData {
 			log.Fatal().Err(err).Msg("Error during CollectSessionData")
 		}
 
-		return sData
+		return parsContext.sessionData
 	}
 }
 
-func runCollect(log *zerolog.Logger) (*dto.SessionData, error) {
-	var skipEvent bool
-	opts := setupChromedpOptions()
-	sessionData := new(dto.SessionData)
-
-	parsCtx := &parsingContext{
-		log:         log,
-		sessionData: sessionData,
+func runCollect(log *zerolog.Logger, parsingContext *parsingContext) (*dto.SessionData, error) {
+	skip := map[string]bool{
+		samokat.CARTS_GET:       false,
+		samokat.CATEGORIES_LIST: false,
 	}
+
+	opts := setupChromedpOptions()
 
 	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), opts...)
 	defer allocCancel()
@@ -68,19 +74,46 @@ func runCollect(log *zerolog.Logger) (*dto.SessionData, error) {
 	defer cancel()
 
 	err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
-		chromedp.ListenTarget(ctx, func(ev interface{}) {
-			if ev, ok := ev.(*network.EventRequestWillBeSent); ok {
-				parsCtx.ev = ev
-				parsCtx.ctx = ctx
+		chromedp.ListenTarget(ctx, func(event interface{}) {
 
-				if strings.Contains(ev.Request.URL, samokat.CARTS_GET) && ev.Request.HasPostData && !skipEvent {
+			parsingContext.ctx = ctx
+
+			switch ev := event.(type) {
+			case *network.EventRequestWillBeSent:
+				if strings.Contains(ev.Request.URL, samokat.CARTS_GET) && ev.Request.HasPostData && !skip[samokat.CARTS_GET] {
 					log.Debug().Msg(ev.Request.URL)
 					log.Debug().Msg(string(ev.RequestID))
-					collectAuthToken(parsCtx)
-					go collectShowcaseId(parsCtx)
-					skipEvent = true
+
+					collectAuthToken(ev, parsingContext)
+					go collectShowcaseId(ev, parsingContext)
+					skip[samokat.CARTS_GET] = true
+				}
+
+			case *network.EventResponseReceived:
+				if match := regexp.MustCompile(samokat.CATEGORIES_LIST_REGEXP).FindStringSubmatch(ev.Response.URL); match != nil {
+					log.Debug().Msg(ev.Response.URL)
+					log.Debug().Msg(string(ev.RequestID))
+
+					time.Sleep(time.Second)
+					go func() {
+						body, err := network.GetResponseBody(ev.RequestID).Do(parsingContext.ctx)
+
+						if len(body) == 0 && err != nil {
+							return
+						}
+
+						if err != nil {
+							log.Error().Err(err).Msg("Error getting response body")
+						}
+
+						result := gjson.Get(string(body), "0")
+
+						log.Debug().Msg(string(result.String()))
+
+					}()
 				}
 			}
+
 		})
 
 		return nil
@@ -89,15 +122,15 @@ func runCollect(log *zerolog.Logger) (*dto.SessionData, error) {
 	err = chromedp.Run(ctx,
 		network.Enable(),
 		chromedp.Navigate(samokat.MAIN),
-		chromedp.Sleep(5*time.Second),
+		chromedp.Sleep(20*time.Second),
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if sessionData.AuthToken != "" && sessionData.ShowcaseID != "" {
-		return sessionData, nil
+	if parsingContext.sessionData.AuthToken != "" && parsingContext.sessionData.ShowcaseID != "" {
+		return parsingContext.sessionData, nil
 	}
 
 	return nil, &errs.ErrSessionDataMissing{}
@@ -113,20 +146,23 @@ func setupChromedpOptions() []chromedp.ExecAllocatorOption {
 	)
 }
 
-func collectShowcaseId(parsCtx *parsingContext) {
-	postData, err := network.GetRequestPostData(parsCtx.ev.RequestID).Do(parsCtx.ctx)
+func collectShowcaseId(ev *network.EventRequestWillBeSent, parsingContext *parsingContext) {
+	postData, err := network.GetRequestPostData(ev.RequestID).Do(parsingContext.ctx)
 
-	err = json.Unmarshal([]byte(postData), parsCtx.sessionData)
 	if err != nil {
-		parsCtx.log.Error().Err(err).Msg("Failed to get showcaseId")
+		parsingContext.log.Error().Err(err).Msg("Failed to get request post data")
 	}
 
-	parsCtx.log.Debug().Str("ShowcaseId", parsCtx.sessionData.ShowcaseID).Send()
+	if err = json.Unmarshal([]byte(postData), parsingContext.sessionData); err != nil {
+		parsingContext.log.Error().Err(err).Msg("Failed to get showcaseId")
+	} else {
+		parsingContext.log.Debug().Str("ShowcaseId", parsingContext.sessionData.ShowcaseID).Send()
+	}
 }
 
-func collectAuthToken(parsCtx *parsingContext) {
-	if authTkn, ok := parsCtx.ev.Request.Headers["authorization"].(string); ok {
-		parsCtx.sessionData.AuthToken = authTkn
+func collectAuthToken(ev *network.EventRequestWillBeSent, parsingContext *parsingContext) {
+	if authTkn, ok := ev.Request.Headers["authorization"].(string); ok {
+		parsingContext.sessionData.AuthToken = authTkn
+		parsingContext.log.Debug().Any("Token", authTkn).Send()
 	}
-	parsCtx.log.Debug().Any("Token", parsCtx.sessionData.AuthToken).Send()
 }
