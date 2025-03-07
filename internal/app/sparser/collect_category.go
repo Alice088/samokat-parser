@@ -20,7 +20,7 @@ func CollectCategories(log *zerolog.Logger, sessionData *dto.SessionData, geo *d
 	if err != nil {
 		log.Fatal().Err(err).
 			Int("Geo id", geo.ID).
-			Msg("Failed to marshal geo")
+			Msg("Failed to marshal geography")
 	}
 
 	log.Debug().Str("JsonGeo", string(jsonGeo)).Send()

@@ -1,4 +1,4 @@
-package geo
+package geography
 
 import (
 	"alice088/sparser/internal/pkg/dto"
@@ -24,7 +24,7 @@ func Init() ([]*dto.GEO, error) {
 	}
 
 	if len(geos) == 0 {
-		return nil, errors.New("no geo objects")
+		return nil, errors.New("no geography objects")
 	}
 
 	return geos, nil
