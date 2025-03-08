@@ -30,7 +30,6 @@ func (p *Parser) getProducts(parsingContext *dto.ParsingContext, subcategory *dt
 
 					if strings.Contains(ev.Response.URL, subcategory.Id) && !skip.(bool) {
 						p.Log.Debug().Msg(ev.Response.URL)
-						(*parsingContext.Skip).Store(subcategory.Id, true)
 						go p.parseProducts(ev, parsingContext, subcategory)
 					}
 				}
