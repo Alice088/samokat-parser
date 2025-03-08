@@ -26,7 +26,7 @@ func (p *Parser) parseProducts(ev *network.EventResponseReceived, parsingContext
 
 	(*parsingContext.Skip).Store(subcategory.Id, true)
 
-	p.fillProductCategory(body, subcategory) //todo для запросов продуктов поставить регион. регион не приминяется
+	p.fillProductCategory(body, subcategory)
 	p.fillProducts(body, subcategory)
 
 	return

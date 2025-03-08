@@ -39,6 +39,8 @@ func (p *Parser) getProducts(parsingContext *dto.ParsingContext, subcategory *dt
 		}),
 		chromedp.Navigate(samokat.MAIN),
 		chromedp.Sleep(2*time.Second),
+		chromedp.Reload(),
+		chromedp.Sleep(2*time.Second),
 		chromedp.Click(fmt.Sprintf(`(//a[contains(@href, '/category/%s')])`, subcategory.Slug), chromedp.BySearch),
 		chromedp.Sleep(4*time.Second),
 	)
