@@ -17,14 +17,14 @@ type GEO struct {
 	Lon      float64 `json:"lon"`
 }
 
-func (g GEO) ToCookie() (string, error) {
-	json, err := json.Marshal(g)
+func (g GEO) URL() (string, error) {
+	bytes, err := json.Marshal(g)
 
 	if err != nil {
 		return "", err
 	}
 
-	escaped := url.PathEscape(string(json))
+	escaped := url.PathEscape(string(bytes))
 
 	escaped = strings.ReplaceAll(escaped, "%7B", "{")
 	escaped = strings.ReplaceAll(escaped, "%7D", "}")

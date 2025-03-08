@@ -20,7 +20,7 @@ func (p *Parser) parseList(ev *network.EventResponseReceived, parsingContext *dt
 		return
 	}
 
-	(*parsingContext.Skip)["categories/list"] = true
+	(*parsingContext.Skip).Store("categories/list", true)
 
 	p.parseCategory(body, categories)
 	p.parseSubcategory(categories, body)
