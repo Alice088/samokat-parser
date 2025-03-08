@@ -13,12 +13,12 @@ func (p *Parser) fillProductCategory(body []byte, subcategory *dto.Subcategory) 
 		return
 	}
 
-	if json.Get("name").Exists() {
-		p.Log.Debug().Msgf("Product category doesn't have target properties")
-		return
-	}
-
 	json.ForEach(func(key gjson.Result, value gjson.Result) bool {
+		if !value.Get("name").Exists() {
+			p.Log.Debug().Msgf("Product category doesn't have target properties")
+			return false
+		}
+
 		*((*subcategory).ProductCategories) = append(*(*subcategory).ProductCategories, dto.NewProductCategory(value))
 		return true
 	})

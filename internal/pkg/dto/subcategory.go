@@ -10,10 +10,19 @@ type Subcategory struct {
 }
 
 func HasSubCategoryProperties(json gjson.Result) bool {
-	return !json.Get("id").Exists() && !json.Get("name").Exists() && !json.Get("slug").Exists()
+	return !json.Get("id").Exists() && !json.Get("name").Exists()
 }
 
 func NewSubCategory(json gjson.Result) *Subcategory {
+	if !json.Get("slug").Exists() {
+		return &Subcategory{
+			Id:                json.Get("id").String(),
+			Name:              json.Get("name").String(),
+			Slug:              json.Get("id").String(),
+			ProductCategories: &[]*ProductCategory{},
+		}
+	}
+
 	return &Subcategory{
 		Id:                json.Get("id").String(),
 		Name:              json.Get("name").String(),

@@ -29,7 +29,7 @@ func (p *Parser) CollectStuff(geo *dto.GEO) (*[]*dto.Category, error) {
 		}
 
 		for j, subcategory := range *category.Subcategories {
-			if j != 0 {
+			if j != 2 {
 				continue
 			}
 

@@ -29,5 +29,7 @@ func (p *Parser) parseProducts(ev *network.EventResponseReceived, parsingContext
 	p.fillProductCategory(body, subcategory)
 	p.fillProducts(body, subcategory)
 
+	p.Log.Info().Msg("Finished filling products")
+
 	return
 }
