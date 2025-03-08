@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func (p *Parser) parseSubcategory(categories *[]*dto.Category, body []byte) {
+func (p *Parser) fillSubcategories(categories *[]*dto.Category, body []byte) {
 	for _, category := range *categories {
 		for i := 22; i < 121; i++ {
 			json := gjson.Get(string(body), strconv.Itoa(i))
@@ -16,7 +16,7 @@ func (p *Parser) parseSubcategory(categories *[]*dto.Category, body []byte) {
 			}
 
 			if dto.HasSubCategoryProperties(json) {
-				p.Log.Debug().Int("INDEX", i).Msgf("Subcategory doesn't has target property")
+				p.Log.Debug().Int("INDEX", i).Msgf("Subcategory doesn't have target properties")
 				continue
 			}
 

@@ -31,6 +31,7 @@ func (p *Parser) getProducts(parsingContext *dto.ParsingContext, subcategory *dt
 					if strings.Contains(ev.Response.URL, subcategory.Id) && !skip.(bool) {
 						p.Log.Debug().Msg(ev.Response.URL)
 						(*parsingContext.Skip).Store(subcategory.Id, true)
+						go p.parseProducts(ev, parsingContext, subcategory)
 					}
 				}
 
@@ -40,7 +41,7 @@ func (p *Parser) getProducts(parsingContext *dto.ParsingContext, subcategory *dt
 		chromedp.Navigate(samokat.MAIN),
 		chromedp.Sleep(2*time.Second),
 		chromedp.Click(fmt.Sprintf(`(//a[contains(@href, '/category/%s')])`, subcategory.Slug), chromedp.BySearch),
-		chromedp.Sleep(40*time.Second),
+		chromedp.Sleep(4*time.Second),
 	)
 
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (p *Parser) parseList(ev *network.EventResponseReceived, parsingContext *dto.ParsingContext, categories *[]*dto.Category) {
+func (p *Parser) parseProducts(ev *network.EventResponseReceived, parsingContext *dto.ParsingContext, subcategory *dto.Subcategory) {
 	time.Sleep(2 * time.Second)
 	body, err := network.GetResponseBody(ev.RequestID).Do(parsingContext.EventCtx)
 
@@ -20,9 +20,8 @@ func (p *Parser) parseList(ev *network.EventResponseReceived, parsingContext *dt
 		return
 	}
 
-	(*parsingContext.Skip).Store("categories/list", true)
-	p.fillCategories(body, categories)
-	p.fillSubcategories(categories, body)
+	p.fillProductCategory(body, subcategory) //todo для запросов продуктов поставить регион. регион не приминяется
+	p.fillProducts(body, subcategory)
 
 	return
 }

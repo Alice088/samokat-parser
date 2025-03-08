@@ -23,8 +23,16 @@ func (p *Parser) CollectStuff(geo *dto.GEO) (*[]*dto.Category, error) {
 	p.getCategories(collectCategoriesCtx, categories)
 
 	wg := &sync.WaitGroup{}
-	for _, category := range *categories {
-		for _, subcategory := range *category.Subcategories {
+	for i, category := range *categories {
+		if i != 5 {
+			continue
+		}
+
+		for j, subcategory := range *category.Subcategories {
+			if j != 0 {
+				continue
+			}
+
 			wg.Add(1)
 			go func() {
 				collectProductCtx, collectProductCtxCancel := dto.NewParsingContext(skip, urlCookie)

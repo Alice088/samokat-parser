@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func (p *Parser) parseCategory(body []byte, categories *[]*dto.Category) {
+func (p *Parser) fillCategories(body []byte, categories *[]*dto.Category) {
 	for i := 1; i < 18; i++ {
 		json := gjson.Get(string(body), strconv.Itoa(i))
 
@@ -16,7 +16,7 @@ func (p *Parser) parseCategory(body []byte, categories *[]*dto.Category) {
 		}
 
 		if dto.HasCategoryProperties(json) {
-			p.Log.Debug().Int("INDEX", i).Msgf("Category doesn't has target property")
+			p.Log.Debug().Int("INDEX", i).Msgf("Category doesn't have target properties")
 			continue
 		}
 

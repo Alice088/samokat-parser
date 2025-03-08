@@ -1,7 +1,15 @@
 package dto
 
+import "github.com/tidwall/gjson"
+
 type ProductCategory struct {
-	UUID     string `json:"uuid"`
 	Name     string `json:"name"`
-	Products []*Product
+	Products *[]*Product
+}
+
+func NewProductCategory(json gjson.Result) *ProductCategory {
+	return &ProductCategory{
+		Name:     json.Get("name").String(),
+		Products: &[]*Product{},
+	}
 }
