@@ -3,6 +3,7 @@ package dto
 import (
 	"encoding/json"
 	"net/url"
+	"strings"
 )
 
 type GEO struct {
@@ -23,5 +24,11 @@ func (g GEO) ToCookie() (string, error) {
 		return "", err
 	}
 
-	return url.QueryEscape(string(json)), nil
+	escaped := url.PathEscape(string(json))
+
+	escaped = strings.ReplaceAll(escaped, "%7B", "{")
+	escaped = strings.ReplaceAll(escaped, "%7D", "}")
+	escaped = strings.ReplaceAll(escaped, "%2F", "/")
+
+	return escaped, nil
 }
