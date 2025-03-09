@@ -9,7 +9,7 @@ import (
 type CancelFunc = func()
 
 func SetupContext() (context.Context, CancelFunc) {
-	timeCtx, timeCtxCancel := context.WithTimeout(context.Background(), 180*time.Second)
+	timeCtx, timeCtxCancel := context.WithTimeout(context.Background(), 480*time.Second)
 	allocCtx, allocCancel := chromedp.NewExecAllocator(timeCtx, SetupChromedpOptions()...)
 	chromeCtx, chromeCancel := chromedp.NewContext(allocCtx)
 
