@@ -3,7 +3,12 @@ package sparser
 import (
 	"alice088/sparser/internal/pkg/dto"
 	"alice088/sparser/internal/pkg/geography"
+	"encoding/json"
+	"fmt"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"log"
+	"os"
 	"sync"
 )
 
@@ -35,10 +40,29 @@ func (p *Parser) Parse() {
 
 		go func() {
 			defer p.wg.Done()
-			_, err := p.CollectStuff(geo)
+			stuff := p.CollectStuff(geo)
+
+			fileUuid := uuid.New().String()
+			file, err := os.Create(fmt.Sprintf("%s.json", fileUuid))
 			if err != nil {
-				p.Log.Error().Err(err).Str("Region", geo.Region).Msg("Error collecting stuff")
+				log.Fatalf("Ошибка при создании файла: %v", err)
 			}
+			defer func(file *os.File) {
+				err = file.Close()
+				if err != nil {
+					p.Log.Error().Err(err).Str("UUID_FILE", fileUuid).Msg("Error closing output file")
+				}
+			}(file)
+
+			encoder := json.NewEncoder(file)
+			encoder.SetIndent("", "  ")
+			if err := encoder.Encode(stuff); err != nil {
+				p.Log.Error().Err(err).
+					Str("REGION_ID", geo.Region).
+					Str("UUID_FILE", fileUuid).
+					Msg("Error encode stuff")
+			}
+
 		}()
 	}
 

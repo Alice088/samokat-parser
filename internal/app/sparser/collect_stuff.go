@@ -2,13 +2,13 @@ package sparser
 
 import (
 	"alice088/sparser/internal/pkg/dto"
-	errs "alice088/sparser/internal/pkg/errors"
+	"alice088/sparser/internal/pkg/env"
 	"math/rand"
 	"sync"
 	"time"
 )
 
-func (p *Parser) CollectStuff(geo *dto.GEO) (*[]*dto.Category, error) {
+func (p *Parser) CollectStuff(geo *dto.GEO) *[]*dto.Category {
 	rand.Seed(time.Now().UnixNano())
 
 	skip := &sync.Map{}
@@ -28,7 +28,7 @@ func (p *Parser) CollectStuff(geo *dto.GEO) (*[]*dto.Category, error) {
 
 	wg := &sync.WaitGroup{}
 	for i, category := range *categories {
-		if i >= 2 {
+		if i >= env.GetCategoryParseLimit() {
 			continue
 		}
 
@@ -45,5 +45,5 @@ func (p *Parser) CollectStuff(geo *dto.GEO) (*[]*dto.Category, error) {
 	}
 	wg.Wait()
 
-	return categories, &errs.ErrSessionDataMissing{}
+	return categories
 }
