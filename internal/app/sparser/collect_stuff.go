@@ -3,10 +3,14 @@ package sparser
 import (
 	"alice088/sparser/internal/pkg/dto"
 	errs "alice088/sparser/internal/pkg/errors"
+	"math/rand"
 	"sync"
+	"time"
 )
 
 func (p *Parser) CollectStuff(geo *dto.GEO) (*[]*dto.Category, error) {
+	rand.Seed(time.Now().UnixNano())
+
 	skip := &sync.Map{}
 	skip.Store("categories/list", false)
 
@@ -24,24 +28,22 @@ func (p *Parser) CollectStuff(geo *dto.GEO) (*[]*dto.Category, error) {
 
 	wg := &sync.WaitGroup{}
 	for i, category := range *categories {
-		if i != 5 {
+		if i >= 2 {
 			continue
 		}
 
-		for j, subcategory := range *category.Subcategories {
-			if j != 2 {
-				continue
-			}
-
+		for _, subcategory := range *category.Subcategories {
+			time.Sleep(time.Duration(rand.Intn(10)+5) * time.Second)
 			wg.Add(1)
-			go func() {
+			go func(subcategory dto.Subcategory) {
+				defer wg.Done()
 				collectProductCtx, collectProductCtxCancel := dto.NewParsingContext(skip, urlCookie)
 				defer collectProductCtxCancel()
-				p.getProducts(collectProductCtx, subcategory, wg)
-			}()
+				p.getProducts(collectProductCtx, &subcategory)
+			}(*subcategory)
 		}
-		wg.Wait()
 	}
+	wg.Wait()
 
 	return categories, &errs.ErrSessionDataMissing{}
 }

@@ -8,13 +8,11 @@ import (
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"strings"
-	"sync"
 	"time"
 )
 
-func (p *Parser) getProducts(parsingContext *dto.ParsingContext, subcategory *dto.Subcategory, wg *sync.WaitGroup) {
+func (p *Parser) getProducts(parsingContext *dto.ParsingContext, subcategory *dto.Subcategory) {
 	(*parsingContext.Skip).Store(subcategory.Id, false)
-	defer wg.Done()
 
 	err := chromedp.Run(parsingContext.ChromeCtx,
 		parsingContext.GeoCookie,
@@ -37,12 +35,13 @@ func (p *Parser) getProducts(parsingContext *dto.ParsingContext, subcategory *dt
 			})
 			return nil
 		}),
+		chromedp.Sleep(1*time.Second),
 		chromedp.Navigate(samokat.MAIN),
 		chromedp.Sleep(2*time.Second),
 		chromedp.Reload(),
-		chromedp.Sleep(2*time.Second),
+		chromedp.Sleep(4*time.Second),
 		chromedp.Click(fmt.Sprintf(`(//a[contains(@href, '/category/%s')])`, subcategory.Slug), chromedp.BySearch),
-		chromedp.Sleep(8*time.Second),
+		chromedp.Sleep(4*time.Second),
 	)
 
 	if err != nil {

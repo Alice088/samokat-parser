@@ -32,7 +32,10 @@ func (p *Parser) getCategories(parsingContext *dto.ParsingContext, categories *[
 			})
 			return nil
 		}),
+		chromedp.Sleep(1*time.Second),
 		chromedp.Navigate(samokat.MAIN),
+		chromedp.Sleep(2*time.Second),
+		chromedp.Reload(),
 		chromedp.Sleep(4*time.Second),
 	)
 
