@@ -1,6 +1,7 @@
 <div align="center">
   <img src="./static/gophers_go.png" alt="go" border="0">
 </div>
+
 ---
 1) to start with. env-example => . env
 2) set `EXEC_CHROME_PATH` to bin of chrome
