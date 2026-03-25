@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="./static/gophers_go.png" alt="go" border="0">
+</div>
+---
 1) to start with. env-example => . env
 2) set `EXEC_CHROME_PATH` to bin of chrome
 3) set GEO_config like(you can do a few object then it will go through all):
